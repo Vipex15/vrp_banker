@@ -43,9 +43,8 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
                     local veh_job = "stockade"
                     vRP.EXT.Base:notifyPicture("CHAR_BANK_MAZE", "Generic Title", "Maze Bank", "Mission:", "You started a mission", 3000)
 
-                    --local spawn_veh = vRP.EXT.Garage:spawnVehicle(veh_job, false,  -4.5730991363525,-670.46520996094,31.944389343262,185.0) 
-                    --local spawn_veh = CreateCar(veh_job, -4.5730991363525,-670.46520996094,31.944389343262,185.0)
-                    --local veh_poz = vRP.EXT.Garage:getOwnedVehiclePosition(spawn_veh)
+                    local spawn_veh = vRP.EXT.Garage:spawnVehicle(veh_job, false,  -4.5730991363525,-670.46520996094,31.944389343262,185.0) 
+                    local veh_poz = vRP.EXT.Garage:getOwnedVehiclePosition(spawn_veh)
 
                     local cartmoney = CreateObject(GetHashKey("v_corp_cashtrolley_2"), value.x, value.y, value.z, true, true, true)
                     SetEntityAsMissionEntity(cartmoney, true, true)
