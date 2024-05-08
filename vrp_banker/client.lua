@@ -1,15 +1,4 @@
-Tunnel = module("vrp", "lib/Tunnel")
-Proxy = module("vrp", "lib/Proxy")
-
-local cvRP = module("vrp", "client/vRP")
-vRP = cvRP()
-
-local pvRP = {}
-pvRP.loadScript = module
-Proxy.addInterface("vRP", pvRP)
-
 local cfg = module("vrp_banker", "cfg")
-
 local vrp_banker = class("vrp_banker", vRP.Extension)
 
 vrp_banker.tunnel = {}
@@ -18,13 +7,30 @@ function vrp_banker:__construct()
     vRP.Extension.__construct(self)
     self.CartsStated = {} 
     self.startMission = false 
-end
+end   
+
 -- Function to load animation dictionary
 function LoadAnimDict(dict)  
     while (not HasAnimDictLoaded(dict)) do
         RequestAnimDict(dict)
         Citizen.Wait(10)
     end    
+end
+
+function CreateCar(model, x,y,z, heading)
+    local hash = GetHashKey(model)
+    RequestModel(hash)
+    while not HasModelLoaded(hash) do
+        Wait(500)
+    end
+    vehicleModel = CreateVehicle(hash, x, y, z, heading, true, false)
+    SetEntityHeading(vehicleModel, heading)
+    SetVehicleOnGroundProperly(vehicleModel)
+    SetEntityInvincible(vehicleModel, false)
+    SetVehicleDirtLevel(vehicleModel, 0.0)
+    SetVehicleEngineOn(vehicleModel, true, true)
+
+    return vehicleModel
 end
 
 function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
@@ -34,6 +40,12 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
         Citizen.CreateThread(function()
             for k, value in pairs(cfg.LocationCart) do
                 if self.startMission then
+                    local veh_job = "stockade"
+                    vRP.EXT.Base:notifyPicture("CHAR_BANK_MAZE", "Generic Title", "Maze Bank", "Mission:", "You started a mission", 3000)
+
+                    --local spawn_veh = vRP.EXT.Garage:spawnVehicle(veh_job, false,  -4.5730991363525,-670.46520996094,31.944389343262,185.0) 
+                    --local spawn_veh = CreateCar(veh_job, -4.5730991363525,-670.46520996094,31.944389343262,185.0)
+                    --local veh_poz = vRP.EXT.Garage:getOwnedVehiclePosition(spawn_veh)
 
                     local cartmoney = CreateObject(GetHashKey("v_corp_cashtrolley_2"), value.x, value.y, value.z, true, true, true)
                     SetEntityAsMissionEntity(cartmoney, true, true)
@@ -76,7 +88,7 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
                                 Citizen.Wait(1)
                                 DisableControlAction(0, 21, true)
                                 TaskPlayAnim(PlayerPedId(), 'anim@heists@box_carry@', 'idle', 8.0, 8.0, -1, 50, 0, false, false, false)
-                                notify("Du-te la masina si depoziteaza", 2000)
+                                vRP.EXT.Base:notifyPicture("CHAR_BANK_MAZE", "Generic Title", "Maze Bank", "Mission:", "You took the cart, now go to the vehicle job", 2000)
                                 break
                             end
                         end
@@ -92,7 +104,9 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
                             AttachEntityToEntity(cartmoney, vehicleModel, 0, 0, -2.5, 0.4, 0.0, 0.0, 85.0, false, false, false, true, 5, true)
                             cart.taken = false
                             ClearPedTasks(PlayerPedId())
-                            notify("l ai bagat sanatos", 2000)
+                            vRP.EXT.Base:notify("l ai bagat sanatos")
+                            vRP.EXT.Base:notifyPicture("CHAR_BANK_MAZE", "Generic Title", "Maze Bank", "Mission:", "You put the cart in the vehicle", 2000)
+
                             local BankBlip = AddBlipForCoord(bank_dep_x, bank_dep_y)
                             SetBlipSprite(BankBlip, 605)
                             SetBlipColour(BankBlip, 46)
@@ -109,19 +123,20 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
                                 Citizen.Wait(1)
                                 DisableControlAction(0, 21, true)
                                 TaskPlayAnim(PlayerPedId(), 'anim@heists@box_carry@', 'idle', 8.0, 8.0, -1, 50, 0, false, false, false)
-                                notify("Ia caruciorul", 2000)
+                                vRP.EXT.Base:notifyPicture("CHAR_BANK_MAZE", "Generic Title", "Maze Bank", "Mission:", "Take the cart from the vehicle", 2000)
                                 
                             end
                         end
                     end 
-                    if cart.taken and Vdist2(bank_dep_x.x, bank_dep_y.y, bank_dep_z.z, pedloc.x, pedloc.y, pedloc.z) < 1.5 then 
+                    if cart.taken and Vdist2(bank_dep_x, bank_dep_y, bank_dep_z, pedloc.x, pedloc.y, pedloc.z) < 1.5 then 
                         DisplayHelpText("[E] Bank")
                         if IsControlJustPressed(1, 46) then 
                             cart.taken = false
                             DeleteEntity(cartmoney)
                             ClearPedTasksImmediately(PlayerPedId())
                             Citizen.Wait(1000)
-                            notify("Bravo")
+                            vRP.EXT.Base:notify("Bravo", 1000)
+                            vRP.EXT.Base:notifyPicture("CHAR_BANK_MAZE", "Generic Title", "Maze Bank", "Mission:", "Now you finished", 2000)
                             RemoveBlip(BankBlip)
                         end
                     end
@@ -129,12 +144,6 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
             end
         end)
     end
-end
-
-function notify(text, time)
-    SetTextComponentFormat('STRING')
-    AddTextComponentString(text)
-    DisplayHelpTextFromStringLabel(0, 0, 1, -1)
 end
 
 function DisplayHelpText(str)
