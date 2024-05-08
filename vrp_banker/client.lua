@@ -7,21 +7,18 @@ function vrp_banker:__construct()
     vRP.Extension.__construct(self)
     self.CartsStated = {} 
     self.startMission = false 
-end   
+end
 
 function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
     self.startMission = true
     LoadAnimDict("anim@heists@box_carry@")
+    
     if self.startMission then 
-
+        local veh_model = cfg.vehicleModel
         local position = {-4.5730991363525, -670.46520996094, 31.944389343262}
-        local veh_model = vRP.EXT.Garage:spawnVehicle("stockade", nil, position)
-        local veh_poz = vRP.EXT.Garage:getOwnedVehiclePosition("stockade")
-        print(veh_poz)
-        local vehBLip = AddBlipForEntity(veh_model)
-        SetBlipSprite(vehBLip, 67)
-        SetBlipColour(vehBLip, 42)
-        SetVehicleNumberPlateText(veh_model, " Banker")
+        vRP.EXT.Garage:spawnVehicle(cfg.vehicleModel, nil, position)
+        local veh_poz = vRP.EXT.Garage:getOwnedVehiclePosition(cfg.vehicleModel)
+        print("Vehicle coords: x = " .. veh_poz.x .. ", y = " .. veh_poz.y .. ", z = " .. veh_poz.z)
 
         Citizen.CreateThread(function()
             for k, value in pairs(cfg.LocationCart) do
@@ -62,6 +59,12 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
                             if IsEntityAttached(cartmoney) then
                                 SetBlipColour(cart.blipId, 42)
                                 cart.taken = true
+
+                                local vehBLip = AddBlipForEntity(veh_model)
+                                SetBlipSprite(vehBLip, 67)
+                                SetBlipColour(vehBLip, 42)
+                                SetVehicleNumberPlateText(veh_model, " Banker")
+
                                 Citizen.Wait(1)
                                 DisableControlAction(0, 21, true)
                                 TaskPlayAnim(PlayerPedId(), 'anim@heists@box_carry@', 'idle', 8.0, 8.0, -1, 50, 0, false, false, false)
@@ -119,6 +122,23 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
                 end
             end
         end)
+    end
+end
+
+function vrp_banker:StopMission()
+    self.startMission = true
+    if self.startMission then 
+        for index, cart in ipairs(self.CartsStated) do
+            if DoesEntityExist(cart.id) then
+                DeleteEntity(cart.id)
+            end
+            if DoesBlipExist(cart.blipId) then
+                RemoveBlip(cart.blipId)
+            end
+        end
+        self.CartsStated = {}
+    else
+    vRP.EXT.Base:notify("NO mission started")
     end
 end
 
