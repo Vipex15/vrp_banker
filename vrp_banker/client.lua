@@ -135,7 +135,6 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
                             DeleteEntity(cartmoney)
                             ClearPedTasksImmediately(PlayerPedId())
                             Citizen.Wait(1000)
-                            vRP.EXT.Base:notify("Bravo", 1000)
                             vRP.EXT.Base:notifyPicture("CHAR_BANK_MAZE", "Generic Title", "Maze Bank", "Mission:", "Now you finished", 2000)
                             RemoveBlip(BankBlip)
                         end
