@@ -9,42 +9,24 @@ function vrp_banker:__construct()
     self.startMission = false 
 end   
 
--- Function to load animation dictionary
-function LoadAnimDict(dict)  
-    while (not HasAnimDictLoaded(dict)) do
-        RequestAnimDict(dict)
-        Citizen.Wait(10)
-    end    
-end
-
-function CreateCar(model, x,y,z, heading)
-    local hash = GetHashKey(model)
-    RequestModel(hash)
-    while not HasModelLoaded(hash) do
-        Wait(500)
-    end
-    vehicleModel = CreateVehicle(hash, x, y, z, heading, true, false)
-    SetEntityHeading(vehicleModel, heading)
-    SetVehicleOnGroundProperly(vehicleModel)
-    SetEntityInvincible(vehicleModel, false)
-    SetVehicleDirtLevel(vehicleModel, 0.0)
-    SetVehicleEngineOn(vehicleModel, true, true)
-
-    return vehicleModel
-end
-
 function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
     self.startMission = true
     LoadAnimDict("anim@heists@box_carry@")
     if self.startMission then 
+
+        local position = {-4.5730991363525, -670.46520996094, 31.944389343262}
+        local veh_model = vRP.EXT.Garage:spawnVehicle("stockade", nil, position)
+        local veh_poz = vRP.EXT.Garage:getOwnedVehiclePosition("stockade")
+        print(veh_poz)
+        local vehBLip = AddBlipForEntity(veh_model)
+        SetBlipSprite(vehBLip, 67)
+        SetBlipColour(vehBLip, 42)
+        SetVehicleNumberPlateText(veh_model, " Banker")
+
         Citizen.CreateThread(function()
             for k, value in pairs(cfg.LocationCart) do
                 if self.startMission then
-                    local veh_job = "stockade"
                     vRP.EXT.Base:notifyPicture("CHAR_BANK_MAZE", "Generic Title", "Maze Bank", "Mission:", "You started a mission", 3000)
-
-                    local spawn_veh = vRP.EXT.Garage:spawnVehicle(veh_job, false,  -4.5730991363525,-670.46520996094,31.944389343262,185.0) 
-                    local veh_poz = vRP.EXT.Garage:getOwnedVehiclePosition(spawn_veh)
 
                     local cartmoney = CreateObject(GetHashKey("v_corp_cashtrolley_2"), value.x, value.y, value.z, true, true, true)
                     SetEntityAsMissionEntity(cartmoney, true, true)
@@ -68,8 +50,8 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
                     local cartmoney = cart.id
                     local cartlocation = GetEntityCoords(cartmoney)
                     local pedloc = GetEntityCoords(PlayerPedId())
-                    local vehicleModel = GetVehiclePedIsIn(PlayerPedId())
-                    local backdoor = GetOffsetFromEntityInWorldCoords(vehicleModel, 0.0, -4.0, 0.0) 
+                    local veh_model = GetVehiclePedIsIn(PlayerPedId())
+                    local backdoor = GetOffsetFromEntityInWorldCoords(veh_model, 0.0, -4.0, 0.0) 
 
                     if not cart.taken and Vdist2(cartlocation, pedloc) < 2.0 then
                         DisplayHelpText("[E] Take the cart")
@@ -79,10 +61,6 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
 
                             if IsEntityAttached(cartmoney) then
                                 SetBlipColour(cart.blipId, 42)
-                                local vehBLip = AddBlipForEntity(vehicleModel)
-                                SetBlipSprite(vehBLip, 67)
-                                SetBlipColour(vehBLip, 42)
-                                SetVehicleNumberPlateText(vehicleModel, " Banker")
                                 cart.taken = true
                                 Citizen.Wait(1)
                                 DisableControlAction(0, 21, true)
@@ -95,12 +73,12 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
                     
                     if cart.taken and not IsEntityAttachedToAnyVehicle(cartmoney) and Vdist2(backdoor.x, backdoor.y, backdoor.z, pedloc.x, pedloc.y, pedloc.z) < 2.5 then
                         DisplayHelpText("[E] Baga-l")
-                        SetVehicleDoorOpen(vehicleModel, 2, 0, 0)
-                        SetVehicleDoorOpen(vehicleModel, 3, 0, 0)
+                        SetVehicleDoorOpen(veh_model, 2, 0, 0)
+                        SetVehicleDoorOpen(veh_model, 3, 0, 0)
 
                         if IsControlJustPressed(1, 46) then
                             RemoveBlip(cart.blipId)
-                            AttachEntityToEntity(cartmoney, vehicleModel, 0, 0, -2.5, 0.4, 0.0, 0.0, 85.0, false, false, false, true, 5, true)
+                            AttachEntityToEntity(cartmoney, veh_model, 0, 0, -2.5, 0.4, 0.0, 0.0, 85.0, false, false, false, true, 5, true)
                             cart.taken = false
                             ClearPedTasks(PlayerPedId())
                             vRP.EXT.Base:notify("l ai bagat sanatos")
@@ -142,6 +120,15 @@ function vrp_banker:StartMission(bank_id, bank_dep_x, bank_dep_y, bank_dep_z)
             end
         end)
     end
+end
+
+
+-- Function to load animation dictionary
+function LoadAnimDict(dict)  
+    while (not HasAnimDictLoaded(dict)) do
+        RequestAnimDict(dict)
+        Citizen.Wait(10)
+    end    
 end
 
 function DisplayHelpText(str)
